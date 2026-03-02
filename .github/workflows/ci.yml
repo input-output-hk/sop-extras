@@ -1,0 +1,155 @@
+name: CI
+
+# Limit concurrent runs of this workflow within a single PR
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ghc: ["9.6", "9.10", "9.12", "9.14"]
+    env:
+      # Modify this value to "invalidate" the Cabal cache.
+      CABAL_CACHE_VERSION: "2026-03-02"
+
+      CABAL: "3.16.1.0"
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: Install Haskell
+      uses: input-output-hk/actions/haskell@latest
+      id: setup-haskell
+      with:
+        ghc-version: ${{ matrix.ghc }}
+        cabal-version: $CABAL
+
+    - name: Update Cabal
+      run: |
+        cabal clean
+        cabal update
+
+    # We create a `dependencies.txt` file that can be used to index the cabal
+    # store cache.
+    #
+    # We do not use `plan.json` directly because adding a dependency to our
+    # Cabal files which was already present somewhere else would result in a
+    # diferent plan, even though the set of dependencies is the same.
+    #
+    # In the future we should consider using `cabal-cache` like in the
+    # `cardano-node`'s GitHub workflow.
+    - name: Record dependencies to be used as cache keys
+      id: record-deps
+      run: |
+        cabal build all --dry-run --minimize-conflict-set
+        cat dist-newstyle/cache/plan.json \
+        | jq '.["install-plan"][].id' \
+        | sort \
+        | uniq > dependencies.txt
+
+    # This is used for caching the cabal store.
+    - name: Store month number as environment variable
+      run:  echo "MONTHNUM=$(/usr/bin/date -u '+%m')" >> $GITHUB_ENV
+
+    # Restore the cabal store cache. See `save-cabal-store`.
+    #
+    # When we restore a previous cache and store a new key, we store both files
+    # that were already in the cache, and new files that were created. To
+    # prevent the cache from growing to quickly, we reset the cache each month.
+    #
+    # NOTE: it's vital that all restore-keys include the month number.
+    # Otherwise, we could restore a cache from a previous month, which makes
+    # caches grow unboundedly.
+    - name: "Restore cache for cabal-store"
+      uses: actions/cache/restore@v5
+      id: restore-cabal-store
+      with:
+        path: ${{ steps.setup-haskell.outputs.cabal-store }}
+        key: cabal-store-${{ env.CABAL_CACHE_VERSION }}-${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.variant }}-${{ env.MONTHNUM }}-${{ hashFiles('dependencies.txt') }}
+        restore-keys: |
+          cabal-store-${{ env.CABAL_CACHE_VERSION }}-${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.variant }}-${{ env.MONTHNUM }}-${{ hashFiles('dependencies.txt') }}
+          cabal-store-${{ env.CABAL_CACHE_VERSION }}-${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.variant }}-${{ env.MONTHNUM }}-
+
+    - name: Build dependencies
+      id: build-dependencies
+      run: cabal build --only-dependencies all -j
+
+    # Save the cabal store cache if the dependencies were succesfully built,
+    # even if subsequent consensus builds/tests/benchmarks could fail. This
+    # should shave off some running time because dependencies don't have to be
+    # rebuilt if any of the later steps fail and the job has to be re-run.
+    #
+    # See https://github.com/actions/cache/tree/v3/save#always-save-cache.
+    - name: "Save cache for cabal-store"
+      uses: actions/cache/save@v5
+      id: save-cabal-store
+      if: steps.build-dependencies.outcome == 'success' && steps.restore-cabal-store.outputs.cache-hit != 'true'
+      with:
+        path: ${{ steps.setup-haskell.outputs.cabal-store }}
+        key:  ${{ steps.restore-cabal-store.outputs.cache-primary-key }}
+
+    - name: Build projects [build]
+      run: cabal build all -j
+
+
+  check-cabal-files:
+
+    name: Cabal files check
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Install Haskell
+      uses: input-output-hk/actions/haskell@latest
+      id: setup-haskell
+      with:
+        cabal-version: "3.16.1.0"
+
+    - uses: actions/checkout@v6
+
+    - name: Cabal check
+      run: ./scripts/check-cabal-files.sh
+
+  check-fourmolu:
+
+    name: Fourmolu formatting
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+
+    - uses: haskell-actions/run-fourmolu@v9
+      with:
+        version: "0.18.0.0"
+
+  check-cabal-gild:
+
+    name: Cabal-gild formatting
+    runs-on: ubuntu-latest
+    steps:
+    - name: Install Haskell
+      uses: input-output-hk/actions/haskell@latest
+      id: setup-haskell
+      with:
+        cabal-version: "3.16.1.0"
+
+    - name: Install cabal-gild
+      run: |
+        cabal update
+        cabal install cabal-gild
+
+    - uses: actions/checkout@v6
+
+    - name: Check cabal-gild
+      run: ./scripts/run-cabal-gild.sh

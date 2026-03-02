@@ -1,0 +1,70 @@
+*~
+
+# GHC
+.ghcid
+.ghc.environment.*
+*.tix
+
+# cabal
+/cabal.project.local*
+/cabal.project.local~
+/cabal.project.freeze
+dist-newstyle/
+dist/
+
+*.swp
+*.swo
+*~
+\#*
+**/tags
+**/TAGS
+
+# nix
+result
+result-[0-9]*
+.stack-to-nix.cache
+.nix-shell-cabal.project
+.envrc
+
+# stack
+.stack-work/
+stack.yaml.lock
+stack.yaml.local.lock
+stack.yaml.local
+
+# emacs
+.auctex-auto
+*_flymake.hs
+.dir-locals.el
+
+# Visual Studio Code
+/.vscode
+
+# Ignore directory used by scripts/ci/check-git-dependencies.sh
+/tmp
+
+
+# https://github.com/github/gitignore/blob/main/Haskell.gitignore
+dist
+dist-*
+cabal-dev
+*.o
+*.hi
+*.hie
+*.chi
+*.chs.h
+*.dyn_o
+*.dyn_hi
+.hpc
+.hsenv
+.cabal-sandbox/
+cabal.sandbox.config
+*.prof
+*.aux
+*.hp
+*.eventlog
+.stack-work/
+cabal.project.local
+cabal.project.local~
+.HTF/
+.ghc.environment.*
