@@ -138,6 +138,9 @@ jobs:
     name: Cabal-gild formatting
     runs-on: ubuntu-latest
     steps:
+    - name: Install fd
+      run: sudo apt install fd-find
+
     - name: Install Haskell
       uses: input-output-hk/actions/haskell@latest
       id: setup-haskell

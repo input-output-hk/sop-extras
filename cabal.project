@@ -5,3 +5,8 @@ multi-repl: True
 packages:
    sop-extras
    strict-sop-core
+
+if impl(ghc >= 9.14)
+  allow-newer:
+   boring:base,
+   these:base
