@@ -26,11 +26,13 @@ module Data.SOP.Strict.NP
   , npToSListI
   , singletonNP
   , tl
+  , toStrict
   ) where
 
 import Data.Coerce
 import Data.Kind (Type)
 import Data.SOP hiding (NP (..), hd, tl)
+import qualified Data.SOP as SOP
 import Data.SOP.Classes
 import Data.SOP.Constraint
 import NoThunks.Class
@@ -192,3 +194,7 @@ instance
         [ noThunks ("fst" : ctxt) x
         , noThunks ("snd" : ctxt) xs
         ]
+
+toStrict :: SOP.NP f xs -> NP f xs
+toStrict SOP.Nil = Nil
+toStrict (x SOP.:* xs) = x :* toStrict xs
