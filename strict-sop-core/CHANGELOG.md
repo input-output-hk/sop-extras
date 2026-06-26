@@ -2,6 +2,15 @@
 
 # Changelog entries
 
+<a id='changelog-0.1.4.0'></a>
+## 0.1.4.0 -- 2026-06-26
+
+### Non-Breaking
+
+- Expose basic specialized functions for NP and NS.
+
+# Changelog entries
+
 <a id='changelog-0.1.3.0'></a>
 ## 0.1.3.0 -- 2025-03-25
 

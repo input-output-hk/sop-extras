@@ -76,8 +76,8 @@ deriving instance Traversable (AtMost xs)
 {-# COMPLETE ExactlyNil, ExactlyCons #-}
 pattern ExactlyCons :: () => xs' ~ (x ': xs) => a -> Exactly xs a -> Exactly xs' a
 pattern ExactlyCons x xs <- (Exactly (K x :* (Exactly -> xs)))
-  where
-    ExactlyCons x xs = Exactly (K x :* getExactly xs)
+ where
+  ExactlyCons x xs = Exactly (K x :* getExactly xs)
 
 pattern ExactlyNil :: () => xs ~ '[] => Exactly xs a
 pattern ExactlyNil = Exactly Nil

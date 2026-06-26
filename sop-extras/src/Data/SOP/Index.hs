@@ -62,8 +62,8 @@ pattern IS ::
   Index xs' x ->
   Index xs x
 pattern IS z <- Index (S (Index -> z))
-  where
-    IS (Index z) = Index (S z)
+ where
+  IS (Index z) = Index (S z)
 
 {-# COMPLETE IZ, IS #-}
 

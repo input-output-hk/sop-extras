@@ -2,6 +2,15 @@
 
 # Changelog entries
 
+<a id='changelog-0.4.1.1'></a>
+## 0.4.1.1 -- 2026-06-26
+
+### Patch
+
+- Formatting source code.
+
+# Changelog entries
+
 <a id='changelog-0.4.1.0'></a>
 ## 0.4.1.0 -- 2025-09-30
 
