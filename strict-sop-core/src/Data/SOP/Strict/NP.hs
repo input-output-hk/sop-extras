@@ -26,6 +26,17 @@ module Data.SOP.Strict.NP
   , npToSListI
   , singletonNP
   , tl
+
+    -- * Specialized functions
+  , pure_NP
+  , cpure_NP
+  , ap_NP
+  , collapse_NP
+  , ctraverse'_NP
+  , ctraverse__NP
+  , traverse__NP
+  , trans_NP
+  , coerce_NP
   ) where
 
 import Data.Coerce
