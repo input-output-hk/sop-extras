@@ -31,6 +31,15 @@ module Data.SOP.Strict.NS
     -- * Injections
   , Injection
   , injections
+
+    -- * Specialized functions
+  , expand_NS
+  , cexpand_NS
+  , ap_NS
+  , collapse_NS
+  , ctraverse'_NS
+  , trans_NS
+  , coerce_NS
   ) where
 
 import Data.Coerce
