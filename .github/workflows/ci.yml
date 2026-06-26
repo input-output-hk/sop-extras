@@ -127,11 +127,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Install Haskell
+      uses: input-output-hk/actions/haskell@latest
+      id: setup-haskell
+      with:
+        cabal-version: "3.16.1.0"
+
     - uses: actions/checkout@v6
 
-    - uses: haskell-actions/run-fourmolu@v9
-      with:
-        version: "0.20.0.0"
+    - name: Install fourmolu
+      run: |
+        sudo apt install fd-find
+        cabal update
+        cabal install fourmolu-0.20.0.0 --ignore-project
+
+    - name: Check fourmolu
+      run: ./scripts/run-fourmolu.sh
 
   check-cabal-gild:
 
