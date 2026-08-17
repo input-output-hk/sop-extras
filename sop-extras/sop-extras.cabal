@@ -36,6 +36,7 @@ library
   hs-source-dirs: src
   exposed-modules:
     Data.SOP.Counting
+    Data.SOP.Either
     Data.SOP.Functors
     Data.SOP.Index
     Data.SOP.InPairs
