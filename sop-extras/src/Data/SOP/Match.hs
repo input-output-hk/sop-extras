@@ -28,6 +28,8 @@ module Data.SOP.Match
   , matchNS
   , matchTelescope
   , telescopesMismatch
+  , matchNonEmpty
+  , matchNEMap
 
     -- * Utilities
   , mismatchNotEmpty
@@ -49,7 +51,11 @@ import Data.Coerce (coerce)
 import Data.Constraint (Dict (..))
 import Data.Functor.Product
 import Data.Kind (Type)
+import Data.List.NonEmpty (NonEmpty (..))
+import Data.Map.NonEmpty (NEMap)
+import qualified Data.Map.NonEmpty as NEMap
 import Data.Proxy
+import Data.SOP (K (..), unComp, (:.:) (..))
 import Data.SOP.Constraint
 import Data.SOP.Sing
 import Data.SOP.Strict
@@ -122,6 +128,53 @@ telescopesMismatch = go
   go (TS _hx r) (TS _gx t) = fmap MS $ go r t
   go (TZ hx) (TS _gx t) = Just $ ML hx (Telescope.tip t)
   go (TS _hx l) (TZ fx) = Just $ MR (Telescope.tip l) fx
+
+-- | Variant of 'matchNS' to check if all values in a 'NonEmpty' list of 'NS's match.
+matchNonEmpty ::
+  SListI xs =>
+  NonEmpty (NS f xs) ->
+  Either (Mismatch (NonEmpty :.: f) f xs) (NS (NonEmpty :.: f) xs)
+matchNonEmpty (x :| rest) =
+  foldl go (Right (hmap (Comp . (:| [])) x)) rest
+ where
+  go ::
+    SListI xs =>
+    Either (Mismatch (NonEmpty :.: g) g xs) (NS (NonEmpty :.: g) xs) ->
+    NS g xs ->
+    Either (Mismatch (NonEmpty :.: g) g xs) (NS (NonEmpty :.: g) xs)
+  go (Left mismatch) _ =
+    Left mismatch
+  go (Right acc) ns =
+    fmap (hmap (\(Pair (Comp fs) f) -> Comp (fs <> (f :| [])))) $
+      matchNS acc ns
+
+-- | Variant of 'matchNS' to check if all values in a 'NEMap' of 'NS's match.
+matchNEMap ::
+  ( SListI xs
+  , Eq k
+  ) =>
+  NEMap k (NS f xs) ->
+  Either (Mismatch (NEMap k :.: f) f xs) (NS (NEMap k :.: f) xs)
+matchNEMap =
+  bimap
+    (bihmap fromNonEmptyPairs (\(Pair _ fx) -> fx))
+    (hmap fromNonEmptyPairs)
+    . matchNonEmpty
+    . toNonEmptyPairs
+ where
+  toNonEmptyPairs ::
+    SListI xs =>
+    NEMap a (NS f xs) ->
+    NonEmpty (NS (Product (K a) f) xs)
+  toNonEmptyPairs =
+    fmap (\(k, v) -> hmap (Pair (K k)) v) . NEMap.toAscList
+
+  fromNonEmptyPairs ::
+    Eq k =>
+    (NonEmpty :.: Product (K k) g) xs ->
+    (NEMap k :.: g) xs
+  fromNonEmptyPairs =
+    Comp . NEMap.fromAscList . fmap (\(Pair (K k) v) -> (k, v)) . unComp
 
 {-------------------------------------------------------------------------------
   SOP class instances for 'Mismatch'
