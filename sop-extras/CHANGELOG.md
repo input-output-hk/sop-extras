@@ -2,6 +2,14 @@
 
 # Changelog entries
 
+<a id='changelog-0.4.2.0'></a>
+## 0.4.2.0 -- 2026-08-17
+
+### Non-Breaking
+
+- Introduce `Data.SOP.Either` with `EitherF`, `mkEitherF` and `hdistribute`.
+- Add `matchNonEmpty` and `matchNEMap` to `Data.SOP.Match`.
+
 <a id='changelog-0.4.1.1'></a>
 ## 0.4.1.1 -- 2026-06-26
 
